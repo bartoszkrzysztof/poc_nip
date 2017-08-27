@@ -1,0 +1,18 @@
+<html lang="pl" ng-app>
+	<head>
+		<meta charset="utf-8">
+		<title>NIP</title>
+		
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.20/angular.min.js"></script>
+		<script src="js/app.js"></script>
+		
+		<link type="text/css" href="css/style.min.css" rel="Stylesheet" />
+
+	</head>
+	<body>
+		<div class="form" ng-controller="InputController">
+			<input type="text" ng-model="companyId.text">
+			<p>{{companyId.number}} | {{companyId.type}}</p>
+		</div>
+	</body>
+</html>
