@@ -12,7 +12,11 @@
 	<body>
 		<div class="form" ng-controller="InputController">
 			<input type="text" ng-model="companyId.text">
+			<button type="submit" ng-click="showInfo()">Pobierz dane</button>
 			<p>{{companyId.number}} | {{companyId.type}}</p>
+			<div>
+				{{companyInfo}}
+			</div>
 		</div>
 	</body>
 </html>

@@ -1,61 +1,75 @@
-function InputController ($scope) {
-	$scope.companyId = { text : '', number : null };
-	var inputValue = function() {
+function InputController ($scope, $http) {
+	$scope.companyId = { text : '7835083242', number : '' };
+	
+	function inputValue() {
 		var validatedId = ValidateId($scope.companyId.text);
-		
 		$scope.companyId.number = validatedId.num;
 		$scope.companyId.type = validatedId.type;
 	};
+	
 	$scope.$watch('companyId.text', inputValue);
+	
+	$scope.url = 'http://ihaveanidea.aveneo.pl/NIPAPI/api/Company';
+	$scope.showInfo = function(){
+	 	$http({
+			url: $scope.url,
+			method: 'GET',
+			params: {CompanyId: $scope.companyId.number}
+			}).then(function(response) {
+				$scope.companyInfo = response.data;
+	 	});
+	};
 } 
 
 function ValidateId (string) {
 	var number = string.replace(/[^0-9]/g, ''),
 		strLenght = number.length,
 		type = '';
-	
-	if (strLenght == 10) {
-		var type = NipCheck(number);
+	if (strLenght < 9) { 
+		var type = 'numer za krótki'; 
 	}
-//	else if (strLenght == 9 || strLenght == 14) {
-//		var type = 'regon';
-//	}
+	else if (strLenght == 10) { 
+		var validation = NipRegonCheck(number, '657234567'); 
+		if (validation === true) {
+			var type = 'nip';
+		}
+		else {
+			var type = 'krs';
+		}
+	}
+	else if (strLenght == 9 || strLenght == 14) { 
+		var validation = NipRegonCheck(number, '89234567'); 
+		if (validation === true) {
+			var type = 'regon';
+		}
+		else {
+			var type = 'niepoprawny numer';
+		}
+	}
+	else { 
+		var type = 'błędna ilość znaków'; 
+	}
 	
 	var obj = {
 		num: number,
 		type: type,
 	}
-	console.log(obj);
 	return obj;
 }
 
-function NipCheck(string) {
+function NipRegonCheck(string, check) {
 	var parts = string.split(''),
-		checks = '657234567'.split(''),
+		checks = check.split(''),
 		sum = 0, checksum = 0;
-	for (i = 0; i <= 8; i++) { 
+	for (i = 0; i < checks.length; i++) { 
 		sum += parseInt(checks[i]) * parseInt(parts[i]);
 	}
-	var checksum = sum % 11;			
-	if (checksum == parseInt(parts[9])) {
-		return 'nip';	
+	var checksum = sum % 11;
+	if (checksum == parseInt(parts[checks.length])) {
+		var valid = true;
+		return valid;	
 	}
 	else {
-		return 'krs';
+		var valid = false;
 	}
 }
-//function RegonCheck(string) {
-//	var parts = string.split(''),
-//		checks = '657234567'.split(''),
-//		sum = 0, checksum = 0;
-//	for (i = 0; i <= 8; i++) { 
-//		sum += parseInt(checks[i]) * parseInt(parts[i]);
-//	}
-//	var checksum = sum % 11;			
-//	if (checksum == parseInt(parts[9])) {
-//		return 'nip';	
-//	}
-//	else {
-//		return 'krs';
-//	}
-//}
