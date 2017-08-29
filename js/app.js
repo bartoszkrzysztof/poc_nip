@@ -1,23 +1,58 @@
-function InputController ($scope, $http) {
+function InputController ($scope, $http, $window, $filter) {
 	$scope.companyId = { text : '7835083242', number : '' };
+	$scope.url = 'http://ihaveanidea.aveneo.pl/NIPAPI/api/Company';
+	
 	
 	function inputValue() {
-		var validatedId = ValidateId($scope.companyId.text);
+		var validatedId = new ValidateId($scope.companyId.text);
 		$scope.companyId.number = validatedId.num;
 		$scope.companyId.type = validatedId.type;
 	};
 	
 	$scope.$watch('companyId.text', inputValue);
 	
-	$scope.url = 'http://ihaveanidea.aveneo.pl/NIPAPI/api/Company';
+	$scope.storageData = angular.fromJson(localStorage.getItem('searchHistory'));
+	if ($scope.storageData === null) {
+		$scope.storageData = [];
+	}
+	
+//	console.log(Object.keys($scope.storageData));
+	
+
+	
 	$scope.showInfo = function(){
-	 	$http({
-			url: $scope.url,
-			method: 'GET',
-			params: {CompanyId: $scope.companyId.number}
-			}).then(function(response) {
-				$scope.companyInfo = response.data;
-	 	});
+		
+		for (var i in $scope.storageData) {
+			if ($scope.storageData[i]['SearchResult']['CompanyId'] == $scope.companyId.number) {
+				var inHistory = true;
+				break;
+			}
+		}
+		if (inHistory !== true) {
+			$http({
+				url: $scope.url,
+				method: 'GET',
+				params: {CompanyId: $scope.companyId.number}
+				}).then(function(response) {
+					$scope.companyInfo = response.data;
+
+					if ($scope.companyInfo.Success === true) {
+						var localStorage = $scope.storageData;
+
+						var obj = {
+							SearchResult: {
+								CompanyId: $scope.companyId.number,
+								TimeStamp: Date.now(),
+								CompanyInformation: $scope.companyInfo.CompanyInformation
+							}
+						};
+						localStorage.push(obj);
+
+						$window.localStorage.setItem('searchHistory', $filter('json')(localStorage, 1));
+					}
+			});
+		}
+
 	};
 } 
 
@@ -25,12 +60,13 @@ function ValidateId (string) {
 	var number = string.replace(/[^0-9]/g, ''),
 		strLenght = number.length,
 		type = '';
+	
 	if (strLenght < 9) { 
 		var type = 'numer za krótki'; 
 	}
 	else if (strLenght == 10) { 
 		var validation = NipRegonCheck(number, '657234567'); 
-		if (validation === true) {
+		if (validation == true) {
 			var type = 'nip';
 		}
 		else {
@@ -39,7 +75,7 @@ function ValidateId (string) {
 	}
 	else if (strLenght == 9 || strLenght == 14) { 
 		var validation = NipRegonCheck(number, '89234567'); 
-		if (validation === true) {
+		if (validation == true) {
 			var type = 'regon';
 		}
 		else {
@@ -50,11 +86,8 @@ function ValidateId (string) {
 		var type = 'błędna ilość znaków'; 
 	}
 	
-	var obj = {
-		num: number,
-		type: type,
-	}
-	return obj;
+	this.num = number;
+	this.type = type;
 }
 
 function NipRegonCheck(string, check) {
@@ -67,9 +100,9 @@ function NipRegonCheck(string, check) {
 	var checksum = sum % 11;
 	if (checksum == parseInt(parts[checks.length])) {
 		var valid = true;
-		return valid;	
 	}
 	else {
 		var valid = false;
 	}
+	return valid;	
 }
