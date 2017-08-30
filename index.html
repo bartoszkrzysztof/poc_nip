@@ -10,14 +10,21 @@
 
 	</head>
 	<body>
-		<div class="form" ng-controller="InputController">
-			<input type="text" ng-model="companyId.text">
-			<button type="submit" ng-click="showInfo()">Pobierz dane</button>
-			<p>{{companyId.prefix}}{{companyId.number}} | {{companyId.valid}}</p>
-			<div>
+		<div ng-controller="InputController">
+			<div class="form-container content">
+				<h1 class="main-header">Wyszukaj firmę po numerze NIP, KRS lub REGON</h1>
+				<p></p>
+				<form ng-submit="showInfo()" class="form">
+					<input type="text" ng-model="companyId.text" class="form-input" placeholder="NIP/KRS/REGON"><button type="submit" class="form-button">Pobierz dane</button>
+					<span ng-show="myForm.myName.$touched && myForm.myName.$invalid">The name is required.</span>
+				</form>
+			</div>
+			
+<!--			<p>{{companyId.prefix}}{{companyId.number}} | {{companyId.valid}}</p>-->
+			<div class="content">
 				{{companyInfo}}
 			</div>
-			<div>
+			<div class="content">
 				<ul>
 					<li ng-repeat="SearchResult in storageData">
 						<span ng-click="showPreviousInfo(SearchResult.SearchResult.CompanyId)">

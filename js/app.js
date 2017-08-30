@@ -52,7 +52,7 @@ function InputController ($scope, $http, $window, $filter) {
 	}
 	
 	function CheckInHistory (storage, id) {
-		$scope.companyId.text = id;
+//		$scope.companyId.text = id;
 		for (var i in storage) {
 			if (storage[i]['SearchResult']['CompanyId'] == id) {
 				$scope.companyInfo = storage[i]['SearchResult'];
