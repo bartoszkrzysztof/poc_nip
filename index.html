@@ -13,12 +13,18 @@
 		<div class="form" ng-controller="InputController">
 			<input type="text" ng-model="companyId.text">
 			<button type="submit" ng-click="showInfo()">Pobierz dane</button>
-			<p>{{companyId.number}} | {{companyId.type}}</p>
+			<p>{{companyId.prefix}}{{companyId.number}} | {{companyId.valid}}</p>
 			<div>
 				{{companyInfo}}
 			</div>
 			<div>
-				{{storageData}}
+				<ul>
+					<li ng-repeat="SearchResult in storageData">
+						<span ng-click="showPreviousInfo(SearchResult.SearchResult.CompanyId)">
+						{{SearchResult.SearchResult.CompanyId}}
+						</a>
+					</li>
+				</ul>
 			</div>
 		</div>
 	</body>
