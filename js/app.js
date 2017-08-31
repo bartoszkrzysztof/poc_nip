@@ -1,8 +1,24 @@
-function InputController ($scope, $http, $window, $filter) {
+var messages = {
+	tooShort : 'Numer za krótki',
+	notValid : 'Numer niepoprawny',
+	tooLong : 'Numer niepoprawny',
+	validNip : 'Poprawny NIP',
+	validRegon : 'Poprawny REGON', 
+	validKrs : 'Poprawny numer KRS'
+}
+var historyPeriod = 3;
+
+function InputController ($scope, $http, $window, $filter, $location, $anchorScroll) {
+	ClearStorage();
+	
 	$scope.companyId = { text : '', number : '' };
 	$scope.url = 'http://ihaveanidea.aveneo.pl/NIPAPI/api/Company';
 	
-	
+	$scope.storageData = angular.fromJson(localStorage.getItem('searchHistory'));
+	if ($scope.storageData === null) {
+		$scope.storageData = [];
+	}
+
 	function inputValue() {
 		var validatedId = new ValidateId($scope.companyId.text);
 		$scope.companyId.number = validatedId.prefix + validatedId.num;
@@ -11,11 +27,6 @@ function InputController ($scope, $http, $window, $filter) {
 	};
 	
 	$scope.$watch('companyId.text', inputValue);
-	
-	$scope.storageData = angular.fromJson(localStorage.getItem('searchHistory'));
-	if ($scope.storageData === null) {
-		$scope.storageData = [];
-	}
 	
 	$scope.showInfo = function(){
 		if ($scope.companyId.valid === true) {
@@ -47,12 +58,13 @@ function InputController ($scope, $http, $window, $filter) {
 		}
 
 	};
-	$scope.showPreviousInfo = function(id) {
+	$scope.showPreviousInfo = function(id, hash) {
 		CheckInHistory($scope.storageData, id);
+		$location.hash(hash);
+    	$anchorScroll();
 	}
 	
 	function CheckInHistory (storage, id) {
-//		$scope.companyId.text = id;
 		for (var i in storage) {
 			if (storage[i]['SearchResult']['CompanyId'] == id) {
 				$scope.companyInfo = storage[i]['SearchResult'];
@@ -71,16 +83,16 @@ function ValidateId (string) {
 		valid = false;
 	
 	if (strLenght < 9) { 
-		var type = 'numer za krótki'; 
+		var type = messages.tooShort; 
 	}
 	else if (strLenght == 10) { 
 		var validation = NipRegonCheck(number, '657234567'); 
 		if (validation == true) {
-			var type = 'nip';
+			var type = messages.validNip;
 			var valid = true;
 		}
 		else {
-			var type = 'krs';
+			var type = messages.validKrs;
 			var valid = true;
 			var prefix = 'KRS'
 		}
@@ -88,15 +100,15 @@ function ValidateId (string) {
 	else if (strLenght == 9 || strLenght == 14) { 
 		var validation = NipRegonCheck(number, '89234567'); 
 		if (validation == true) {
-			var type = 'regon';
+			var type = messages.validRegon;
 			var valid = true;
 		}
 		else {
-			var type = 'niepoprawny numer';
+			var type = messages.notValid;
 		}
 	}
 	else { 
-		var type = 'błędna ilość znaków'; 
+		var type = messages.tooLong; 
 	}
 	
 	this.num = number;
@@ -120,4 +132,34 @@ function NipRegonCheck(string, check) {
 		var valid = false;
 	}
 	return valid;	
+}
+
+function ClearStorage() {
+	var date = new Date();
+	date.setDate(date.getDate() - historyPeriod);
+	var compareDate = new Date(date);
+	var unixtime = new Date(compareDate).getTime();
+	var obj = JSON.parse(localStorage.getItem('searchHistory'));
+	for (var i in obj) {
+		var historytime = obj[i].SearchResult.TimeStamp;
+		if (historytime < unixtime) {
+			delete obj[i];
+		}
+	}
+//	obj = obj.filter(function(n){ return n });
+	obj = filter_array(obj);
+	localStorage.setItem('searchHistory', JSON.stringify(obj));
+}
+function filter_array(test_array) {
+    var index = -1,
+        arr_length = test_array ? test_array.length : 0,
+        resIndex = -1,
+        result = [];
+    while (++index < arr_length) {
+        var value = test_array[index];
+        if (value) {
+            result[++resIndex] = value;
+        }
+    }
+    return result;
 }
