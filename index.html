@@ -1,33 +1,47 @@
-<html lang="pl" ng-app>
+<html lang="pl" >
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>NIP</title>
 		
-		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.20/angular.min.js"></script>
+		<script type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.20/angular.min.js"></script>
+		<script type='text/javascript' src="modules/angular-animate.min.js"></script>
+ 		<script type='text/javascript' src='modules/loading-bar.min.js'></script>
 		<script src="js/app.js"></script>
 		
+		 <link rel='stylesheet' href='css/loading-bar.min.css' type='text/css' media='all' />
+		
+		<link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet">
 		<link type="text/css" href="css/style.min.css" rel="Stylesheet" />
 
 	</head>
-	<body>
-		<div ng-controller="InputController">
+	<body ng-app="NipApp" ng-controller="NipController">
+		<div >
 			<div class="form-container content" id="top">
 				<h1 class="main-header">Wyszukaj firmę po numerze NIP, KRS lub REGON</h1>
 				<form ng-submit="showInfo()" class="form">
-					<input type="text" ng-model="companyId.text" class="form-input" placeholder="NIP/KRS/REGON"><button type="submit" class="form-button">Pobierz dane</button>
-					<p class="input_info input_info--valid-{{companyId.valid}}">&nbsp;<span ng-show="companyId.text.length" >{{companyId.type}} <span class="input_info__tooltip-button input_info__tooltip-button--valid-{{companyId.valid}}"></span><span class="tooltip-info">Prawidłowy numer NIP ma format: 777-777-77-77, 7777777777 lub PL7777777777. <br /><br />Numer REGON powinien mieć 9 lub 14 cyfr. <br /><br />Numer KRS pownien być w formacie 10-cyfrowym (jeśli numer jest krótszy, powinien być poprzedzony odpowednią ilością zer).</span></span></p>
+					<input type="text" ng-model="companyId.text" class="form-input" placeholder="NIP/KRS/REGON"><button type="submit" class="form-button form-button--enabled-{{companyId.valid}}" ng-click="buttonClick=true">Pobierz dane</button>
+					<p class="input-info input-info--valid-{{companyId.valid}}" ng-show="companyId.text.length || buttonClick" ng-hide="!companyId.text.length || companyInfo" >
+						{{companyId.type}} 
+						<span class="input-info__tooltip-button input-info__tooltip-button--valid-{{companyId.valid}}"></span>
+						<span class="tooltip-info">Prawidłowy numer NIP ma format: 777-777-77-77, 7777777777 lub PL7777777777. <br /><br />Numer REGON powinien mieć 9 lub 14 cyfr. <br /><br />Numer KRS pownien być w formacie 10-cyfrowym (jeśli numer jest krótszy, powinien być poprzedzony odpowednią ilością zer).</span>
+					</p>
 				</form>
 			</div>
 			<div class="content company-info" ng-show="companyInfo">
-				<p class="company-info__paragraph company-info__paragraph--title">{{companyInfo.CompanyInformation.Name}}</p>
-				<p class="company-info__paragraph">{{companyInfo.CompanyInformation.Street}} {{companyInfo.CompanyInformation.HouseNumber}}<span ng-show="companyInfo.CompanyInformation.ApartmentNumber">/</span>{{companyInfo.CompanyInformation.ApartmentNumber}}</p>
-				<p class="company-info__paragraph">{{companyInfo.CompanyInformation.PostalCode}} {{companyInfo.CompanyInformation.HouseNumber}} {{companyInfo.CompanyInformation.Place}}</p>
-				<p class="company-info__paragraph company-info__paragraph--none" ng-show="companyInfo.CompanyInformation == null">Brak wyników wyszukiwania</p>
+				<div ng-show="companyInfo.CompanyInformation != null">
+					<p class="company-info__paragraph company-info__paragraph--title">{{companyInfo.CompanyInformation.Name}}</p>
+					<p class="company-info__paragraph">{{companyInfo.CompanyInformation.Street}} {{companyInfo.CompanyInformation.HouseNumber}}<span ng-show="companyInfo.CompanyInformation.ApartmentNumber">/</span>{{companyInfo.CompanyInformation.ApartmentNumber}}</p>
+					<p class="company-info__paragraph">{{companyInfo.CompanyInformation.PostalCode}} {{companyInfo.CompanyInformation.HouseNumber}} {{companyInfo.CompanyInformation.Place}}</p>
+				</div>
+				<p class="company-info__paragraph company-info__paragraph--none" ng-show="companyInfo.CompanyInformation == null">Brak danych dla: <strong>{{searchedId}}</strong></p>
 			</div>
-			<div class="content history">
-				<label class="history-toggle"><input type="checkbox" ng-model="checked" aria-label="Toggle ngShow" class="history-toggle__checkbox"><span class="history-toggle__text">Zobacz wcześniejsze wyszukiwania</span></label><br />
-				<ul class="history__list animate-show-hide" ng-show="checked">
+			<div class="content history" ng-show="storageData != 0">
+				<label class="history-toggle">
+					<input type="checkbox" ng-model="checked" aria-label="Toggle ngShow" class="history-toggle__checkbox">
+					<span class="history-toggle__text">Zobacz wcześniejsze wyszukiwania</span>
+				</label>
+				<ul class="history__list" ng-show="checked">
 					<li ng-repeat="SearchResult in storageData" class="history__list-item" ng-click="showPreviousInfo(SearchResult.SearchResult.CompanyId, 'top')">
 						<span class="history__list-text">{{SearchResult.SearchResult.CompanyId}}</span> <span class="history__list-text history__list-text--data">({{SearchResult.SearchResult.TimeStamp | date : 'dd.MM.yyyy'}})</span>
 					</li>

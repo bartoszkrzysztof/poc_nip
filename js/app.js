@@ -1,14 +1,19 @@
-var messages = {
+var config = {
 	tooShort : 'Numer za krótki',
 	notValid : 'Numer niepoprawny',
 	tooLong : 'Numer niepoprawny',
-	validNip : 'Poprawny NIP',
-	validRegon : 'Poprawny REGON', 
-	validKrs : 'Poprawny numer KRS'
+	validNip : 'Poprawny numer NIP',
+	validRegon : 'Poprawny numer REGON', 
+	validKrs : 'Poprawny numer KRS',
+	historyPeriod : 3
 }
-var historyPeriod = 3;
 
-function InputController ($scope, $http, $window, $filter, $location, $anchorScroll) {
+angular.module('NipApp', ['chieffancypants.loadingBar', 'ngAnimate'])
+.config(['cfpLoadingBarProvider', function(cfpLoadingBarProvider) {
+    cfpLoadingBarProvider.includeSpinner = false;
+}])
+
+function NipController ($scope, $http, $window, $filter, $location, $anchorScroll, cfpLoadingBar) {
 	ClearStorage();
 	
 	$scope.companyId = { text : '', number : '' };
@@ -30,10 +35,12 @@ function InputController ($scope, $http, $window, $filter, $location, $anchorScr
 	
 	$scope.showInfo = function(){
 		if ($scope.companyId.valid === true) {
+			cfpLoadingBar.start();
 			$scope.inHistory = false;
 			CheckInHistory($scope.storageData, $scope.companyId.number);
 
 			if ($scope.inHistory !== true) {
+				$scope.searchedId = $scope.companyId.number;
 				$http({
 					url: $scope.url,
 					method: 'GET',
@@ -50,20 +57,20 @@ function InputController ($scope, $http, $window, $filter, $location, $anchorScr
 								}
 							};
 							$scope.storageData.push(obj);
-
 							$window.localStorage.setItem('searchHistory', $filter('json')($scope.storageData, 1));
 						}
 				});
 			}
+			cfpLoadingBar.complete();
 		}
-
 	};
-	$scope.showPreviousInfo = function(id, hash) {
+	$scope.showPreviousInfo = function(id, targetHash) {
+		cfpLoadingBar.start();
 		CheckInHistory($scope.storageData, id);
-		$location.hash(hash);
+		$location.path(targetHash);
     	$anchorScroll();
+		cfpLoadingBar.complete();
 	}
-	
 	function CheckInHistory (storage, id) {
 		for (var i in storage) {
 			if (storage[i]['SearchResult']['CompanyId'] == id) {
@@ -83,16 +90,16 @@ function ValidateId (string) {
 		valid = false;
 	
 	if (strLenght < 9) { 
-		var type = messages.tooShort; 
+		var type = config.tooShort; 
 	}
 	else if (strLenght == 10) { 
 		var validation = NipRegonCheck(number, '657234567'); 
 		if (validation == true) {
-			var type = messages.validNip;
+			var type = config.validNip;
 			var valid = true;
 		}
 		else {
-			var type = messages.validKrs;
+			var type = config.validKrs;
 			var valid = true;
 			var prefix = 'KRS'
 		}
@@ -100,15 +107,15 @@ function ValidateId (string) {
 	else if (strLenght == 9 || strLenght == 14) { 
 		var validation = NipRegonCheck(number, '89234567'); 
 		if (validation == true) {
-			var type = messages.validRegon;
+			var type = config.validRegon;
 			var valid = true;
 		}
 		else {
-			var type = messages.notValid;
+			var type = config.notValid;
 		}
 	}
 	else { 
-		var type = messages.tooLong; 
+		var type = config.tooLong; 
 	}
 	
 	this.num = number;
@@ -136,30 +143,18 @@ function NipRegonCheck(string, check) {
 
 function ClearStorage() {
 	var date = new Date();
-	date.setDate(date.getDate() - historyPeriod);
+	date.setDate(date.getDate() - config.historyPeriod);
 	var compareDate = new Date(date);
 	var unixtime = new Date(compareDate).getTime();
 	var obj = JSON.parse(localStorage.getItem('searchHistory'));
-	for (var i in obj) {
-		var historytime = obj[i].SearchResult.TimeStamp;
-		if (historytime < unixtime) {
-			delete obj[i];
+	if (obj != null) {
+		for (var i in obj) {
+			var historytime = obj[i].SearchResult.TimeStamp;
+			if (historytime < unixtime) {
+				delete obj[i];
+			}
 		}
+		obj = obj.filter(function(n){ return n });
+		localStorage.setItem('searchHistory', JSON.stringify(obj));
 	}
-//	obj = obj.filter(function(n){ return n });
-	obj = filter_array(obj);
-	localStorage.setItem('searchHistory', JSON.stringify(obj));
-}
-function filter_array(test_array) {
-    var index = -1,
-        arr_length = test_array ? test_array.length : 0,
-        resIndex = -1,
-        result = [];
-    while (++index < arr_length) {
-        var value = test_array[index];
-        if (value) {
-            result[++resIndex] = value;
-        }
-    }
-    return result;
 }
